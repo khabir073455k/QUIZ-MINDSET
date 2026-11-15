@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#102b69">
+<title>Quiz Mindset</title>
+<style>
+:root{color-scheme:dark;--navy:#102b69;--blue:#1d4690;--sky:#60a5fa;--white:#fff}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(160deg,#071a45,#102b69 55%,#163d82);color:var(--white);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;min-height:100vh}
+header{text-align:center;padding:30px 16px 20px}header .brain{font-size:48px}h1{font-size:clamp(30px,8vw,46px);letter-spacing:1px;margin:8px 0}header p{color:#bfdbfe;margin:0}
+main{max-width:680px;margin:0 auto;padding:12px 16px 40px}.panel{background:#fff;color:#102044;border-radius:20px;padding:20px;box-shadow:0 14px 35px #0003;margin-bottom:16px}
+h2{margin:0 0 14px;color:#102b69}button,input,select,textarea{font:inherit}button{border:0;border-radius:12px;padding:13px 16px;background:#1d4690;color:white;font-weight:700;cursor:pointer}button.secondary{background:#e8efff;color:#15336f}button.danger{background:#fee2e2;color:#991b1b}.stack{display:grid;gap:10px}.actions{display:grid;gap:10px}.wide{width:100%}input,textarea,select{width:100%;border:1px solid #cbd5e1;border-radius:10px;padding:12px;background:white;color:#102044}label{display:block;font-weight:650;margin:10px 0 6px}.muted{color:#64748b;font-size:14px}.item{border:1px solid #dbe4f5;border-radius:12px;padding:12px;margin-top:10px;display:flex;gap:10px;align-items:center}.item span{flex:1;overflow-wrap:anywhere}.item.done span{text-decoration:line-through;color:#64748b}.hidden{display:none!important}.choice{display:block;text-align:left;width:100%;margin:8px 0;background:#edf3ff;color:#102b69;border:2px solid transparent}.choice.selected{border-color:#2563eb;background:#dbeafe}.tag{display:inline-block;background:#dbeafe;color:#15336f;border-radius:99px;padding:5px 10px;font-size:12px;font-weight:700}.notice{background:#eff6ff;border-left:4px solid #2563eb;padding:10px;border-radius:8px;color:#17356e;font-size:14px}
+footer{text-align:center;color:#bfdbfe;font-size:12px;padding:16px}
+</style>
+</head>
+<body>
+<header><div class="brain" aria-hidden="true">🧠</div><h1>QUIZ MINDSET</h1><p>THINK • LEARN • ACHIEVE</p></header>
+<main>
+<section id="home" class="panel stack">
+<h2>Welcome!</h2><p>Ready to learn something new?</p>
+<button class="wide" onclick="show('take')">▶ START QUIZ</button>
+<button class="wide secondary" onclick="show('assignments')">MY ASSIGNMENTS</button>
+<button class="wide secondary" onclick="show('builder')">CREATE A QUIZ</button>
+</section>
+<section id="assignments" class="panel hidden">
+<h2>My Assignments</h2><label for="assignmentName">Assignment name</label><input id="assignmentName" placeholder="Example: Math homework">
+<button class="wide" onclick="addAssignment()">＋ Add assignment</button><div id="assignmentList"></div>
+<button class="wide secondary" onclick="show('home')">Back to home</button>
+</section>
+<section id="builder" class="panel hidden">
+<h2>Create a Quiz</h2><p class="muted">Add a question and four answer choices. Choose the correct answer.</p>
+<label for="questionText">Question</label><textarea id="questionText" rows="2" placeholder="Type your question"></textarea>
+<div id="choiceInputs"></div>
+<label for="correctChoice">Correct answer</label><select id="correctChoice"><option value="0">Answer A</option><option value="1">Answer B</option><option value="2">Answer C</option><option value="3">Answer D</option></select>
+<button class="wide" onclick="saveQuestion()">Save question</button><div id="savedQuestions"></div>
+<button class="wide secondary" onclick="show('home')">Back to home</button>
+</section>
+<section id="take" class="panel hidden">
+<h2>Take Your Quiz</h2><div id="quizArea"></div>
+<button class="wide secondary" onclick="show('home')">Back to home</button>
+</section>
+</main><footer>QUIZ MINDSET • THINK • LEARN • ACHIEVE</footer>
+<script>
+const $=id=>document.getElementById(id);
+let assignments=JSON.parse(localStorage.getItem('qm_assignments')||'[]');
+let questions=JSON.parse(localStorage.getItem('qm_questions')||'[]');
+let qIndex=0,score=0,selected=null,locked=false;
+function show(id){['home','assignments','builder','take'].forEach(x=>$(x).classList.toggle('hidden',x!==id));if(id==='assignments')renderAssignments();if(id==='builder'){renderChoiceInputs();renderSavedQuestions()}if(id==='take')renderQuiz()}
+function addAssignment(){let v=$('assignmentName').value.trim();if(!v)return;assignments.push({name:v,done:false});$('assignmentName').value='';localStorage.setItem('qm_assignments',JSON.stringify(assignments));renderAssignments()}
+function renderAssignments(){$('assignmentList').innerHTML='';if(!assignments.length){$('assignmentList').innerHTML='<p class="muted">No assignments yet. Add one above.</p>';return}assignments.forEach((a,i)=>{let row=document.createElement('div');row.className='item'+(a.done?' done':'');let cb=document.createElement('input');cb.type='checkbox';cb.checked=a.done;cb.style.width='20px';cb.onchange=()=>{a.done=cb.checked;localStorage.setItem('qm_assignments',JSON.stringify(assignments));renderAssignments()};let span=document.createElement('span');span.textContent=a.name;let del=document.createElement('button');del.className='danger';del.textContent='Delete';del.onclick=()=>{assignments.splice(i,1);localStorage.setItem('qm_assignments',JSON.stringify(assignments));renderAssignments()};row.append(cb,span,del);$('assignmentList').append(row)})}
+function renderChoiceInputs(){$('choiceInputs').innerHTML='';['A','B','C','D'].forEach((l,i)=>{let label=document.createElement('label');label.textContent='Answer '+l;let input=document.createElement('input');input.id='choice'+i;input.placeholder='Enter answer '+l;$('choiceInputs').append(label,input)})}
+function saveQuestion(){let q=$('questionText').value.trim(),opts=[0,1,2,3].map(i=>$('choice'+i).value.trim()),correct=Number($('correctChoice').value);if(!q||opts.some(x=>!x)){alert('Please fill in the question and all four answers.');return}questions.push({q,opts,correct});localStorage.setItem('qm_questions',JSON.stringify(questions));$('questionText').value='';[0,1,2,3].forEach(i=>$('choice'+i).value='');renderSavedQuestions()}
+function renderSavedQuestions(){$('savedQuestions').innerHTML='<h3>Saved questions ('+questions.length+')</h3>';questions.forEach((q,i)=>{let p=document.createElement('p');p.className='notice';p.textContent=(i+1)+'. '+q.q;let b=document.createElement('button');b.className='danger';b.textContent='Delete';b.onclick=()=>{questions.splice(i,1);localStorage.setItem('qm_questions',JSON.stringify(questions));renderSavedQuestions()};$('savedQuestions').append(p,b)})}
+function renderQuiz(){let area=$('quizArea');if(!questions.length){area.innerHTML='<p>No questions yet. Create a quiz first.</p>';return}if(qIndex>=questions.length){area.innerHTML='<h3>Quiz complete!</h3><p class="tag">Score: '+score+' / '+questions.length+'</p><button class="wide" onclick="qIndex=0;score=0;show(\\'take\\')">Try again</button>';return}let q=questions[qIndex];area.innerHTML='<span class="tag">Question '+(qIndex+1)+' of '+questions.length+'</span><h3></h3><div id="quizChoices"></div><p id="feedback" class="muted"></p><button id="submitAnswer" class="wide" disabled>Check answer</button><button id="nextQuestion" class="wide hidden">Next question</button>' ;area.querySelector('h3').textContent=q.q;let choices=$('quizChoices');q.opts.forEach((o,i)=>{let b=document.createElement('button');b.className='choice';b.textContent=String.fromCharCode(65+i)+'. '+o;b.onclick=()=>{if(locked)return;selected=i;[...choices.children].forEach(x=>x.classList.remove('selected'));b.classList.add('selected');$('submitAnswer').disabled=false};choices.append(b)});$('submitAnswer').onclick=()=>{if(selected===null)return;locked=true;let ok=selected===q.correct;if(ok)score++;$('feedback').textContent=ok?'That is correct!':'Correct answer: '+String.fromCharCode(65+q.correct)+'. '+q.opts[q.correct];$('submitAnswer').classList.add('hidden');$('nextQuestion').classList.remove('hidden')};$('nextQuestion').onclick=()=>{qIndex++;selected=null;locked=false;renderQuiz()}}
+renderChoiceInputs();
+</script>
+</body></html>
